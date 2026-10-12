@@ -10,7 +10,7 @@ public interface ChannelService {
     List<ChannelResponse> getALlChannel();
     ChannelResponse getChannelById(Integer channelId);
     ChannelResponse getChannelByHandle(String channelHandle);
-    ChannelResponse updateChannel(Long Id, ChannelRequest request);
+    ChannelResponse updateChannel(Integer id, ChannelRequest request);
     void deleteChannel(Integer ChannelId);
 
 }
