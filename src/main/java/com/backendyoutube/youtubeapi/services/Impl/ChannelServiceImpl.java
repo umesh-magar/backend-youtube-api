@@ -25,12 +25,12 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public ChannelResponse createChannel(ChannelRequest request) {
 
-        if(channelRepository.exitsByHandle(request.getChannelHandle())){
+        if(channelRepository.existsByChannelHandle(request.getChannelHandle())){
             throw new ConflictException("handle already exists");
         }
         Channel channel=channelMapper.toEntity(request);
-        channelRepository.save(channel);
-        return channelMapper.toResponse(channel);
+        Channel savedChannel =channelRepository.save(channel);
+        return channelMapper.toResponse(savedChannel);
     }
 
     @Override
@@ -52,7 +52,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public ChannelResponse getChannelByHandle(String channelHandle) {
-        Channel channel=channelRepository.findByHandle(channelHandle).orElseThrow(()->new NotFoundException("channel not found"));
+        Channel channel=channelRepository.findByChannelHandle(channelHandle).orElseThrow(()->new NotFoundException("channel not found"));
         return channelMapper.toResponse(channel);
     }
 

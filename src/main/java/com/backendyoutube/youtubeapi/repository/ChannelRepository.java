@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 @Repository
 public interface ChannelRepository extends JpaRepository<Channel,Integer> {
-    Optional<Channel> findByHandle(String Handle);
-    boolean exitsByHandle(String handle);
+    Optional<Channel> findByChannelHandle(String Handle);
+    boolean existsByChannelHandle(String handle);
 
 }
