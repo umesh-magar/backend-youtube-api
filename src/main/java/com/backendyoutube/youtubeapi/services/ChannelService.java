@@ -7,10 +7,10 @@ import java.util.List;
 
 public interface ChannelService {
     ChannelResponse createChannel(ChannelRequest request);
-    List<ChannelResponse> getALlChannel();
+    List<ChannelResponse> getALlChannels();
     ChannelResponse getChannelById(Integer channelId);
     ChannelResponse getChannelByHandle(String channelHandle);
-    ChannelResponse updateChannel(Integer id, ChannelRequest request);
-    void deleteChannel(Integer ChannelId);
+    ChannelResponse updateChannel(Integer channelId, ChannelRequest request);
+    void deleteChannel(Integer channelId);
 
 }

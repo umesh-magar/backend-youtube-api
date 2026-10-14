@@ -16,7 +16,17 @@ public class ChannelMapper {
                 .build();
     }
     public ChannelResponse toResponse(Channel channel){
-        return  ChannelResponse.builder().build();
+        return  ChannelResponse.builder().
+                channelId(channel.getChannelId())
+                .channelName(channel.getChannelName())
+                .channelHandle(channel.getChannelHandle())
+                .description(channel.getDescription())
+                .build();
+    }
+    public void updateEntity(ChannelRequest request,Channel channel){
+        channel.setChannelName(request.getChannelName());
+        channel.setChannelHandle(request.getChannelHandle());
+        channel.setDescription(request.getDescriptions());
     }
 
 }

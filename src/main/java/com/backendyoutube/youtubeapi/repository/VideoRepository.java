@@ -9,5 +9,6 @@ import java.util.List;
 public interface VideoRepository extends JpaRepository<Video,Integer> {
     List<Video> findByChannel_Id(Integer channelId);
     List<Video> findByChannel_IdOrderByCreatedAtDesc(Integer channelId);
+    boolean existsByChannel_ChannelId(Integer channelId);
 
 }

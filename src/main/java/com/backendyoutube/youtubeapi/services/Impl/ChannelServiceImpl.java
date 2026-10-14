@@ -4,13 +4,13 @@ import com.backendyoutube.youtubeapi.dto.channel.ChannelRequest;
 import com.backendyoutube.youtubeapi.dto.channel.ChannelResponse;
 import com.backendyoutube.youtubeapi.entities.Channel;
 import com.backendyoutube.youtubeapi.exceptions.ConflictException;
-import com.backendyoutube.youtubeapi.exceptions.NotFoundException;
+import com.backendyoutube.youtubeapi.exceptions.ResourceNotFoundException;
 import com.backendyoutube.youtubeapi.mapper.ChannelMapper;
 import com.backendyoutube.youtubeapi.repository.ChannelRepository;
+import com.backendyoutube.youtubeapi.repository.VideoRepository;
 import com.backendyoutube.youtubeapi.services.ChannelService;
-import org.springframework.data.crossstore.ChangeSetPersister;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,11 +18,14 @@ import java.util.List;
 public class ChannelServiceImpl implements ChannelService {
     private final ChannelRepository channelRepository;
     private final ChannelMapper channelMapper;
-    public ChannelServiceImpl(ChannelRepository channelRepository, ChannelMapper channelMapper){
+    private final VideoRepository videoRepository;
+    public ChannelServiceImpl(ChannelRepository channelRepository, ChannelMapper channelMapper, VideoRepository videoRepository){
         this.channelRepository=channelRepository;
         this.channelMapper=channelMapper;
+        this.videoRepository=videoRepository;
     }
     @Override
+    @Transactional
     public ChannelResponse createChannel(ChannelRequest request) {
 
         if(channelRepository.existsByChannelHandle(request.getChannelHandle())){
@@ -34,38 +37,61 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
-    public List<ChannelResponse> getALlChannel() {
+    @Transactional(readOnly=true)
+    public List<ChannelResponse> getALlChannels() {
        List <Channel> channels=channelRepository.findAll();
-       List<ChannelResponse> channelDtos=new ArrayList<>();
-       for(Channel channel:channels){
-           ChannelResponse channelResponse=channelMapper.toResponse(channel);
-           channelDtos.add(channelResponse);
-       }
-        return channelDtos;
+       return channels
+               .stream().
+               map(channelMapper::toResponse)
+               .toList();
+//       List<ChannelResponse> channelDtos=new ArrayList<>();
+//       for(Channel channel:channels){
+//           ChannelResponse channelResponse=channelMapper.toResponse(channel);
+//           channelDtos.add(channelResponse);
+//       }
+//        return channelDtos;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ChannelResponse getChannelById(Integer channelId) {
-        Channel channel=channelRepository.findById(channelId).orElseThrow(()->new NotFoundException("channel not found"));
+        Channel channel=channelRepository.findById(channelId).
+                orElseThrow(()->new ResourceNotFoundException("channel not found with id " + channelId));
         return channelMapper.toResponse(channel);
     }
 
     @Override
+    @Transactional(readOnly=true)
     public ChannelResponse getChannelByHandle(String channelHandle) {
-        Channel channel=channelRepository.findByChannelHandle(channelHandle).orElseThrow(()->new NotFoundException("channel not found"));
+        Channel channel=channelRepository.findByChannelHandle(channelHandle).
+                orElseThrow(()->new ResourceNotFoundException("channel not found wih handle " + channelHandle));
         return channelMapper.toResponse(channel);
     }
 
     @Override
-    public ChannelResponse updateChannel(Integer id, ChannelRequest request) {
-        Channel channel=channelRepository.findById(id).orElseThrow(()->new NotFoundException("channel not found"));
-        Channel channel1=channelMapper.toEntity(request);
-        channelRepository.save(channel1);
-        return channelMapper.toResponse(channel1);
+    @Transactional
+    public ChannelResponse updateChannel(Integer channelId, ChannelRequest request) {
+        Channel channel=channelRepository.findById(channelId).orElseThrow(()->new
+                ResourceNotFoundException("channel not found with id " + channelId));
+        channelRepository.findByChannelHandle(request.getChannelHandle()).ifPresent(existingChannel->{
+            if(!existingChannel.getChannelId().equals(channelId)){
+                throw new ConflictException("Channel handle already exists");
+            }
+        });
+       channelMapper.updateEntity(request,channel);
+       Channel updatedChannel= channelRepository.save(channel);
+        return channelMapper.toResponse(updatedChannel);
     }
 
     @Override
-    public void deleteChannel(Integer ChannelId) {
+    @Transactional
+    public void deleteChannel(Integer channelId) {
+        Channel channel=channelRepository.findById(channelId).
+                orElseThrow(()->new ResourceNotFoundException("channel not found with id: " + channelId));
+        if(videoRepository.existsByChannel_ChannelId(channelId)){
+            throw new ConflictException("cannot delete the channel at contains video");
+        }
+        channelRepository.deleteById(channelId);
 
     }
 }

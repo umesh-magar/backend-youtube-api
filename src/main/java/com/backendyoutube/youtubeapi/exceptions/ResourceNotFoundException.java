@@ -2,8 +2,8 @@ package com.backendyoutube.youtubeapi.exceptions;
 
 import org.springframework.http.HttpStatus;
 
-public class NotFoundException extends ApiException{
-    public NotFoundException(String message){
+public class ResourceNotFoundException extends ApiException{
+    public ResourceNotFoundException(String message){
         super(HttpStatus.NOT_FOUND,message);
     }
 }
