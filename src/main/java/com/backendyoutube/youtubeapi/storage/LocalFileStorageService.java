@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -21,8 +22,13 @@ import java.util.UUID;
 @Slf4j
 public class LocalFileStorageService implements FileStorageService{
     private static final Set<String> ALLOWED_DIRECTORIES=Set.of("videos","thumbnails");
-    private static final Set<String> VIDEO_EXTENSIONS=Set.of("mp4","mov","m4v","webm");
-    private static final Set<String> THUMBNAIL_EXTENSIONS=Set.of("jpg","jpeg","png","web");
+//    private static final Set<String> VIDEO_EXTENSIONS=Set.of("mp4","mov","m4v","webm");
+//    private static final Set<String> THUMBNAIL_EXTENSIONS=Set.of("jpg","jpeg","png","webp");
+private static final Map<String, Set<String>> ALLOWED_EXTENSIONS =
+        Map.of(
+                "videos", Set.of("mp4", "mov", "m4v", "webm"),
+                "thumbnails", Set.of("jpg", "jpeg", "png", "webp")
+        );
     private final Path root;
     public LocalFileStorageService(StorageProperties properties){
         this.root=Path.of(properties.baseDir())
@@ -38,20 +44,14 @@ public class LocalFileStorageService implements FileStorageService{
             throw new StorageException("Could not initialize local storage");
         }
     }
-    private  Path resolve(String relativePath){
-        Path resolved=root.resolve(relativePath).normalize();
-        if(resolved.equals(root) || !resolved.startsWith(root)){
-            throw new StorageException("Invalid storage path ");
-        }
-        return resolved;
-    }
+
     @Override
-     public  String storeVideo(MultipartFile file, String directory, String extension){
+     public  String store(MultipartFile file, String directory, String extension){
         if(file==null || file.isEmpty()){
             throw new BadRequestException("A  file is required");
         }
         String safeDirectory=validateDirectory(directory);
-        String safeExtension=validateExtensions(directory,extension);
+        String safeExtension=validateExtension(directory,extension);
         String relativePath=safeDirectory +"/" + UUID.randomUUID() + "." +safeExtension;
         Path target=resolve(relativePath);
         try {
@@ -70,27 +70,7 @@ public class LocalFileStorageService implements FileStorageService{
         }
 
     }
-    String validateDirectory(String directory){
-        if(directory==null || !ALLOWED_DIRECTORIES.contains(directory)){
-            throw new StorageException("Unsupported storage directory");
-        }
-        return directory;
-    }
-    String validateExtensions(String directory, String extensions){
-        if(!StringUtils.hasText(extensions)){
-            throw new BadRequestException("File extension is required");
-        }
-        String normalized=extensions.trim().toLowerCase(Locale.ROOT);
-        if(normalized.startsWith(".")){
-            normalized=normalized.substring(1);
-        }
-        Set<String> allowedExtensions=directory.equals("videos")? VIDEO_EXTENSIONS: THUMBNAIL_EXTENSIONS;
-        if(!allowedExtensions.contains(normalized)){
-            throw new BadRequestException("Unsupported file extension");
-        }
-        return normalized;
 
-    }
     @Override
     public void delete(String relativePath) {
         Path target=resolve(relativePath);
@@ -108,5 +88,44 @@ public class LocalFileStorageService implements FileStorageService{
             throw new ResourceNotFoundException("File not found on storage");
         }
         return new FileSystemResource(path);
+    }
+
+
+    private  Path resolve(String relativePath){
+        Path resolved=root.resolve(relativePath).normalize();
+        if(resolved.equals(root) || !resolved.startsWith(root)){
+            throw new StorageException("Invalid storage path ");
+        }
+        return resolved;
+    }
+    String validateDirectory(String directory){
+        if(directory==null || !ALLOWED_DIRECTORIES.contains(directory)){
+            throw new StorageException("Unsupported storage directory");
+        }
+        return directory;
+    }
+    String validateExtension(String directory, String extension){
+        if(!StringUtils.hasText(extension)){
+            throw new BadRequestException("File extension is required");
+        }
+        String normalized=extension.trim().toLowerCase(Locale.ROOT);
+        if(normalized.startsWith(".")){
+            normalized=normalized.substring(1);
+        }
+        Set<String> allowedExtensions = ALLOWED_EXTENSIONS.get(directory);
+
+        if (allowedExtensions == null) {
+            throw new BadRequestException("Unsupported storage directory");
+        }
+
+        if (!allowedExtensions.contains(normalized)) {
+            throw new BadRequestException("Unsupported file extension");
+        }
+//        Set<String> allowedExtensions=directory.equals("videos")? VIDEO_EXTENSIONS: THUMBNAIL_EXTENSIONS;
+//        if(!allowedExtensions.contains(normalized)){
+//            throw new BadRequestException("Unsupported file extension");
+//        }
+        return normalized;
+
     }
 }

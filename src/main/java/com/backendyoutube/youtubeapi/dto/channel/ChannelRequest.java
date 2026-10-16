@@ -11,7 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ChannelRequest {
     @NotBlank(message = "Channel name is required")
-    @Size(max=100,message = "Channel name cannot exceeds 100 charactera")
+    @Size(max=100,message = "Channel name cannot exceeds 100 character")
     private String ChannelName;
     @NotBlank(message = "Channel handle is required")
     @Size(max=100, message = "Channel name cannot exceeds 100 character")

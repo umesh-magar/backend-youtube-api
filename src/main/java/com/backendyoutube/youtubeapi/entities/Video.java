@@ -18,13 +18,13 @@ public class Video {
     @Column(nullable = false,length = 200)
     private String title;
     @Column(length = 500)
-    private String descriptions;
+    private String description;
     @Column(nullable = false,length = 500)
     private String videoUrl;
     @Column(length = 100)
     private String thumbnailUrl;
     @Column(nullable = false)
-    private Integer durationSeconds;
+    private Integer durationSecond;
     @Column(nullable = false,updatable = false)
     private LocalDateTime createdAt;
     @ManyToOne(fetch = FetchType.LAZY,optional = false)
