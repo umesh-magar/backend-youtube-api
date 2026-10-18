@@ -9,12 +9,11 @@ import com.backendyoutube.youtubeapi.mapper.ChannelMapper;
 import com.backendyoutube.youtubeapi.repository.ChannelRepository;
 import com.backendyoutube.youtubeapi.repository.VideoRepository;
 import com.backendyoutube.youtubeapi.services.ChannelService;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-
-import java.util.ArrayList;
 import java.util.List;
 
+@Service
 public class ChannelServiceImpl implements ChannelService {
     private final ChannelRepository channelRepository;
     private final ChannelMapper channelMapper;

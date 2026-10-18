@@ -20,7 +20,7 @@ public class FileStorageController {
     consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> store(@RequestPart("file") MultipartFile file){
         String extension= StringUtils.getFilenameExtension(file.getOriginalFilename());
-        String storageKey=fileStorageService.storeVideo(file,"videos",extension);
+        String storageKey=fileStorageService.store(file,"videos",extension);
         return ResponseEntity.status(HttpStatus.CREATED).body(storageKey);
     }
 
