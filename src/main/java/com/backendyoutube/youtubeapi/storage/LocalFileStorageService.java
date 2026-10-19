@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
@@ -21,7 +22,7 @@ import java.util.UUID;
 @Service
 @Slf4j
 public class LocalFileStorageService implements FileStorageService{
-    private static final Set<String> ALLOWED_DIRECTORIES=Set.of("videos","thumbnails");
+//    private static final Set<String> ALLOWED_DIRECTORIES=Set.of("videos","thumbnails");
 //    private static final Set<String> VIDEO_EXTENSIONS=Set.of("mp4","mov","m4v","webm");
 //    private static final Set<String> THUMBNAIL_EXTENSIONS=Set.of("jpg","jpeg","png","webp");
 private static final Map<String, Set<String>> ALLOWED_EXTENSIONS =
@@ -37,11 +38,14 @@ private static final Map<String, Set<String>> ALLOWED_EXTENSIONS =
     @PostConstruct
     void init(){
         try{
-            Files.createDirectories(resolve("videos"));
-            Files.createDirectories(resolve("thumbnails"));
-            log.info("local storage initialized");
+//            Files.createDirectories(resolve("videos"));
+//            Files.createDirectories(resolve("thumbnails"));
+//            log.info("local storage initialized");
+            for(String directory:ALLOWED_EXTENSIONS.keySet()){
+                Files.createDirectories(resolve(directory));
+            }
         }catch (IOException ex) {
-            throw new StorageException("Could not initialize local storage");
+            throw new StorageException("Could not initialize local storage",ex);
         }
     }
 
@@ -70,40 +74,75 @@ private static final Map<String, Set<String>> ALLOWED_EXTENSIONS =
         }
 
     }
+    @Override
+    public Resource load(String relativePath) {
+        Path path=resolvedStoredFile(relativePath);
+        if(!Files.isRegularFile(path) || !Files.isReadable(path)){
+            throw new ResourceNotFoundException("File not found in storage");
+        }
+        return new FileSystemResource(path);
+    }
 
     @Override
     public void delete(String relativePath) {
-        Path target=resolve(relativePath);
+//        Path target=resolve(relativePath);
+        Path target=resolvedStoredFile(relativePath);
         try{
+
             Files.deleteIfExists(target);
         }catch (IOException ex){
             throw new StorageException("could not delete the stored file",ex);
         }
     }
 
-    @Override
-    public Resource load(String relativePath) {
-        Path path=resolve(relativePath);
-        if(!Files.isReadable(path)){
-            throw new ResourceNotFoundException("File not found on storage");
-        }
-        return new FileSystemResource(path);
-    }
-
 
     private  Path resolve(String relativePath){
-        Path resolved=root.resolve(relativePath).normalize();
+        if(!StringUtils.hasText(relativePath)){
+            throw new StorageException("path is required");
+        }
+        final Path suppliedPath;
+        try{
+            suppliedPath=Path.of(relativePath);
+        }catch (InvalidPathException ex){
+            throw new StorageException("Invalid storage path",ex);
+        }
+        if(suppliedPath.isAbsolute()|| !suppliedPath.normalize().equals(suppliedPath)){
+            throw  new StorageException("Invalid storage path");
+        }
+        Path resolved=root.resolve(suppliedPath).normalize();
         if(resolved.equals(root) || !resolved.startsWith(root)){
             throw new StorageException("Invalid storage path ");
         }
         return resolved;
     }
+    private Path resolvedStoredFile(String relativePath){
+        if(!StringUtils.hasText(relativePath)){
+            throw new BadRequestException("storage file path required");
+        }
+        final Path suppliedPath;
+        try{
+            suppliedPath=Path.of(relativePath);
+        }catch (InvalidPathException ex){
+            throw new StorageException("Invalid storage path", ex);
+        }
+        if(suppliedPath.isAbsolute() || suppliedPath.getNameCount()!=2 || !suppliedPath.normalize().equals(suppliedPath)) {
+            throw new StorageException("Invalid storage path");
+        }
+        String directory=suppliedPath.getName(0).toString();
+        String fileName=suppliedPath.getFileName().toString();
+        validateDirectory(directory);
+        String extension=StringUtils.getFilenameExtension(fileName);
+        validateExtension(directory,extension);
+        return resolve(suppliedPath.toString());
+    }
+
     String validateDirectory(String directory){
-        if(directory==null || !ALLOWED_DIRECTORIES.contains(directory)){
-            throw new StorageException("Unsupported storage directory");
+        if(!StringUtils.hasText(directory) || !ALLOWED_EXTENSIONS.containsKey(directory)){
+            throw new BadRequestException("Unsupported storage directory");
         }
         return directory;
     }
+
     String validateExtension(String directory, String extension){
         if(!StringUtils.hasText(extension)){
             throw new BadRequestException("File extension is required");
@@ -129,3 +168,4 @@ private static final Map<String, Set<String>> ALLOWED_EXTENSIONS =
 
     }
 }
+

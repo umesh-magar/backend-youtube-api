@@ -44,11 +44,11 @@ public class VideoServiceImpl implements VideoService {
         String thumbnailKey=null;
         try{
             String videoExtension=getExtension(file);
-            String thumbnailExtension=getExtension(file);
+            String thumbnailExtension=getExtension(thumbnail);
             videoKey=fileStorageService.store(file,"videos",videoExtension);
 
-            if(thumbnail!=null || !thumbnail.isEmpty()){
-                thumbnailKey=fileStorageService.store(file,"thumbnails",thumbnailExtension);
+            if(thumbnail!=null && !thumbnail.isEmpty()){
+                thumbnailKey=fileStorageService.store(thumbnail,"thumbnails",thumbnailExtension);
             }
             Video video=videoMapper.toEntity(requestDto,videoKey,thumbnailKey);
             video.setChannel(channel);
