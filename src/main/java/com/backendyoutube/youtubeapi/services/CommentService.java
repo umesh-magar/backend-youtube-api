@@ -7,7 +7,7 @@ import com.backendyoutube.youtubeapi.dto.video.VideoRequestDto;
 import java.util.List;
 
 public interface CommentService {
-     CommentResponseDto create(Integer videoId, VideoRequestDto requestDto);
+     CommentResponseDto create(Integer videoId, CommentRequestDto requestDto);
      List <CommentResponseDto> getComment(Integer commentId);
      public CommentResponseDto updateComment(Integer commentId, CommentRequestDto requestDto);
      public void deleteComment(Integer videoId);

@@ -8,6 +8,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class CommentResponseDto {
-    private Integer videoId;
+    private Integer commentId;
     private String content;
 }
