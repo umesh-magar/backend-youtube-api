@@ -10,6 +10,7 @@ import com.backendyoutube.youtubeapi.mapper.CommentMapper;
 import com.backendyoutube.youtubeapi.repository.CommentRepository;
 import com.backendyoutube.youtubeapi.repository.VideoRepository;
 import com.backendyoutube.youtubeapi.services.CommentService;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,16 +29,20 @@ public class CommentServiceImpl implements CommentService {
     public CommentResponseDto create(Integer videoId, CommentRequestDto requestDto) {
         Video video=videoRepository.findById(videoId).orElseThrow(()->new ResourceNotFoundException("video not found"));
         Comment comment=commentMapper.toEntity(requestDto,video);
+        commentRepository.save(comment);
         return commentMapper.responseDto(comment);
     }
 
     @Override
-    public List<CommentResponseDto> getComment(Integer commentId) {
+    public List<CommentResponseDto> getComment(Integer videoId) {
+        Video video=videoRepository.findById(videoId).orElseThrow(()->new ResourceNotFoundException("video not found"));
+
         return List.of();
     }
 
     @Override
     public CommentResponseDto updateComment(Integer commentId, CommentRequestDto requestDto) {
+        Comment comment=commentRepository.findById(commentId).orElseThrow(()->new ResourceNotFoundException("comment not found"));
         return null;
     }
 
